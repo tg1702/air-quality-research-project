@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -228,15 +230,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-const url = "https://api.thingspeak.com/channels";
-const channelId = "2362111";
+final url = dotenv.env['URL'];
+final channelId = dotenv.env['CHANNEL_ID'];
 
 Stream<List> getFields()  {
 
   late final StreamController<List> controller;
   controller = StreamController<List>(
     onListen: () async {
-      const complete_url = "$url/$channelId/feeds.json";
+      final complete_url = "$url/$channelId/feeds.json";
       final headers = {'Content-Type': 'application/json'};
 
       final response = await http.get(Uri.parse(complete_url), headers: headers);
