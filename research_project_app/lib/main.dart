@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_html/flutter_html.dart';
@@ -5,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
 import 'charts.dart';
 
@@ -13,201 +16,6 @@ Future main() async {
   runApp(const MyApp());
 }
 
-final body_1 = Center(
-  // Center is a layout widget. It takes a single child and positions it
-  // in the middle of the parent.
-  child: StreamBuilder<Map<String,dynamic>>(
-
-    // Column is also a layout widget. It takes a list of children and
-    // arranges them vertically. By default, it sizes itself to fit its
-    // children horizontally, and tries to be as tall as its parent.
-    //
-    // Invoke "debug painting" (press "p" in the console, choose the
-    // "Toggle Debug Paint" action from the Flutter Inspector in Android
-    // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-    // to see the wireframe for each widget.
-    //
-    // Column has various properties to control how it sizes itself and
-    // how it positions its children. Here we use mainAxisAlignment to
-    // center the children vertically; the main axis here is the vertical
-    // axis because Columns are vertical (the cross axis would be
-    // horizontal).
-    stream: getFields(),
-    builder: (BuildContext context, AsyncSnapshot<Map<String,dynamic>> snapshot){
-      List<Widget> children = [];
-      if (snapshot.hasError){
-        children = const <Widget>
-        [
-          Text(
-              "Some Error has occurred. Check your internet connection"
-          ),
-        ];
-
-      }
-      else if (snapshot.connectionState ==  ConnectionState.none){
-
-      }
-      else if (snapshot.connectionState ==  ConnectionState.waiting){
-        // TODO: Show circular progress bar
-      }
-      else if (snapshot.connectionState ==  ConnectionState.active){
-
-        children = <Widget> [
-          SfRadialGauge(
-            title: const GaugeTitle(
-                text: 'PPM Meter',
-                textStyle: TextStyle(fontSize: 50, fontWeight: FontWeight.bold)
-            ),
-            axes: <RadialAxis>[
-              RadialAxis(minimum: 0, maximum: 300, ranges: <GaugeRange>[
-                GaugeRange(
-                    startValue: 0,
-                    endValue: 90,
-                    color: Colors.green,
-                    startWidth: 10,
-                    endWidth: 10),
-                GaugeRange(
-                  startValue: 91,
-                  endValue: 220,
-                  color: Colors.yellow,
-                  startWidth: 10,
-                  endWidth: 10,
-                ),
-                GaugeRange(
-                  startValue: 221,
-                  endValue: 300,
-                  color: Colors.red,
-                  startWidth: 10,
-                  endWidth: 10,
-                ),
-              ],
-                pointers: <GaugePointer>[
-                  NeedlePointer(value: double.parse(snapshot.data!["field1"]))
-                ],
-                annotations: <GaugeAnnotation>[
-                  GaugeAnnotation(
-                      widget: Text(
-                          '${snapshot.data!["field1"]} ppm', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold)
-                      ),
-                      angle: 90,
-                      positionFactor: 0.5
-                  ),
-                ],
-              )
-            ],
-
-
-          ),
-
-          Row(
-              mainAxisSize:MainAxisSize.min,
-              children: <Widget> [
-                Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 0, 50.0, 0),
-                    child: Column(
-                      children: [
-                        const Text(
-                            'Daily Average',
-                            style: TextStyle(fontWeight: FontWeight.bold)
-                        ),
-
-                        Text(
-                          '${snapshot.data!["fields"]} ppm',
-
-                        ),
-                      ],
-                    )
-                ),
-
-
-                Column(
-                  children: [
-                    const Text(
-                        'Weekly Average',
-                        style: TextStyle(fontWeight: FontWeight.bold)
-                    ),
-                    Text(
-                        '${snapshot.data!["field1"]} ppm'
-                    )
-                  ],
-                ),
-
-              ]
-
-          ),
-
-
-
-        ];
-      }
-
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: children,
-      );
-    },
-
-
-  ),
-);
-
-final body_2 = Center(
-  child: StreamBuilder<List>(
-    stream: _getCharts(),
-    builder: (BuildContext context, AsyncSnapshot<List> snapshot){
-      List <Widget> children = [];
-
-      if (snapshot.hasError){
-        children = const <Widget>
-        [
-          Text(
-              "Some Error has occurred. Check your internet connection"
-          ),
-        ];
-
-      }
-      else if (snapshot.connectionState ==  ConnectionState.none){
-
-      }
-      else if (snapshot.connectionState ==  ConnectionState.waiting){
-        // TODO: Show circular progress bar
-      }
-      else if (snapshot.connectionState ==  ConnectionState.active) {
-
-        children = <Widget>[
-          Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Html(
-                    data: snapshot.data?[0]
-                ),
-
-              ]
-          ),
-          const Text(
-              'Testing'
-          )
-
-        ];
-      }
-
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      );
-    },
-
-
-  ),
-
-
-);
-
-final bodyOptions = [
-  body_1,
-  body_2
-];
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -257,6 +65,213 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   int _selectedIndex = 0;
+  late Map<String,dynamic> test = {};
+
+
+  @override
+  void initState(){
+    super.initState();
+
+  }
+
+
+  late final body_1 = Center(
+    // Center is a layout widget. It takes a single child and positions it
+    // in the middle of the parent.
+    child: StreamBuilder<Map<String,dynamic>>(
+
+      // Column is also a layout widget. It takes a list of children and
+      // arranges them vertically. By default, it sizes itself to fit its
+      // children horizontally, and tries to be as tall as its parent.
+      //
+      // Invoke "debug painting" (press "p" in the console, choose the
+      // "Toggle Debug Paint" action from the Flutter Inspector in Android
+      // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+      // to see the wireframe for each widget.
+      //
+      // Column has various properties to control how it sizes itself and
+      // how it positions its children. Here we use mainAxisAlignment to
+      // center the children vertically; the main axis here is the vertical
+      // axis because Columns are vertical (the cross axis would be
+      // horizontal).
+      stream: getFields(),
+      builder: (BuildContext context, AsyncSnapshot<Map<String,dynamic>> snapshot){
+        List<Widget> children = [];
+        if (snapshot.hasError){
+          children = const <Widget>
+          [
+            Text(
+                "Some Error has occurred. Check your internet connection"
+            ),
+          ];
+
+        }
+        else if (snapshot.connectionState ==  ConnectionState.none){
+
+        }
+        else if (snapshot.connectionState ==  ConnectionState.waiting){
+          // TODO: Show circular progress bar
+        }
+        else if (snapshot.connectionState ==  ConnectionState.active){
+
+          children = <Widget> [
+            SfRadialGauge(
+              title: const GaugeTitle(
+                  text: 'PPM Meter',
+                  textStyle: TextStyle(fontSize: 50, fontWeight: FontWeight.bold)
+              ),
+              axes: <RadialAxis>[
+                RadialAxis(minimum: 0, maximum: 300, ranges: <GaugeRange>[
+                  GaugeRange(
+                      startValue: 0,
+                      endValue: 90,
+                      color: Colors.green,
+                      startWidth: 10,
+                      endWidth: 10),
+                  GaugeRange(
+                    startValue: 91,
+                    endValue: 220,
+                    color: Colors.yellow,
+                    startWidth: 10,
+                    endWidth: 10,
+                  ),
+                  GaugeRange(
+                    startValue: 221,
+                    endValue: 300,
+                    color: Colors.red,
+                    startWidth: 10,
+                    endWidth: 10,
+                  ),
+                ],
+                  pointers: <GaugePointer>[
+                    NeedlePointer(value: double.parse(snapshot.data!["field1"]))
+                  ],
+                  annotations: <GaugeAnnotation>[
+                    GaugeAnnotation(
+                        widget: Text(
+                            '${snapshot.data!["field1"]} ppm', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold)
+                        ),
+                        angle: 90,
+                        positionFactor: 0.5
+                    ),
+                  ],
+                )
+              ],
+
+
+            ),
+
+            Row(
+                mainAxisSize:MainAxisSize.min,
+                children: <Widget> [
+                  Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 50.0, 0),
+                      child: Column(
+                        children: [
+                          const Text(
+                              'Daily Average',
+                              style: TextStyle(fontWeight: FontWeight.bold)
+                          ),
+
+                          Text(
+                            '${snapshot.data!["fields"]} ppm',
+
+                          ),
+                        ],
+                      )
+                  ),
+
+
+                  Column(
+                    children: [
+                      const Text(
+                          'Weekly Average',
+                          style: TextStyle(fontWeight: FontWeight.bold)
+                      ),
+                      Text(
+                          '${test} ppm'
+                      )
+                    ],
+                  ),
+
+                ]
+
+            ),
+
+
+
+          ];
+        }
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: children,
+        );
+      },
+
+
+    ),
+  );
+
+  late final body_2 = Center(
+    child: StreamBuilder<List>(
+      stream: _getCharts(),
+      builder: (BuildContext context, AsyncSnapshot<List> snapshot){
+        List <Widget> children = [];
+
+        if (snapshot.hasError){
+          children = const <Widget>
+          [
+            Text(
+                "Some Error has occurred. Check your internet connection"
+            ),
+          ];
+
+        }
+        else if (snapshot.connectionState ==  ConnectionState.none){
+
+        }
+        else if (snapshot.connectionState ==  ConnectionState.waiting){
+          // TODO: Show circular progress bar
+        }
+        else if (snapshot.connectionState ==  ConnectionState.active) {
+
+          children = <Widget>[
+            Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Html(
+                      data: snapshot.data?[0]
+                  ),
+
+                ]
+            ),
+            const Text(
+                'Testing'
+            )
+
+          ];
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: children,
+        );
+      },
+
+
+    ),
+
+
+  );
+
+  late final bodyOptions = [
+    body_1,
+    body_2
+  ];
+
+
 
 
 
@@ -300,60 +315,69 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   }
+  final url = dotenv.env['URL'];
+  final channelId = dotenv.env['CHANNEL_ID'];
+
+
+
+  Stream<Map<String, dynamic>> getFields()  {
+    StreamController<Map<String, dynamic>> controller = StreamController<Map<String,dynamic>>.broadcast();
+    Timer.periodic(const Duration(seconds: 10), (Timer timer) async {
+      // Fetch data from the API and update your state
+
+          final completeUrl = "$url/$channelId/feeds.json?results=1";
+          final headers = {'Content-Type': 'application/json'};
+
+          final response = await http.get(Uri.parse(completeUrl), headers: headers);
+
+          Map<String,dynamic> originalJson = Map<String,dynamic>.from(json.decode(response.body));
+
+          if (originalJson["feeds"] != []){
+            controller.add({
+              "field1":
+              originalJson["feeds"][0]["field1"]
+              ,
+            });
+
+
+          }
+
+
+
+    });
+    return controller.stream;
+
+
+
+  }
+
+  Stream<List> _getCharts(){
+    late final StreamController<List> controller;
+
+    controller = StreamController<List>.broadcast(
+        onListen: () async{
+          final url = dotenv.env['URL'];
+          final channelId = dotenv.env['CHANNEL_ID'];
+
+          final liveReadingsUrl = '$url/$channelId/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15';
+
+
+
+          final iframe = """"<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="$liveReadingsUrl"></iframe>""";
+
+
+          controller.add([iframe]);
+
+        }
+    );
+    return controller.stream;
+  }
 }
 
-final url = dotenv.env['URL'];
-final channelId = dotenv.env['CHANNEL_ID'];
-
-Stream<Map<String, dynamic>> getFields()  {
-  late final StreamController<Map<String, dynamic>> controller;
-  controller = StreamController<Map<String, dynamic>>.broadcast(
-    onListen: () async {
-      final completeUrl = "$url/$channelId/feeds.json?results=1";
-      final headers = {'Content-Type': 'application/json'};
-
-      final response = await http.get(Uri.parse(completeUrl), headers: headers);
-
-      Map<String,dynamic> originalJson = Map<String,dynamic>.from(json.decode(response.body));
-
-      if (originalJson["feeds"] != []){
-        controller.add({
-          "field1":
-          originalJson["feeds"][0]["field1"]
-          ,
-        });
-
-      }
-
-    },
-  );
-  return controller.stream;
-}
 
 
-Stream<List> _getCharts(){
-  late final StreamController<List> controller;
-
-  controller = StreamController<List>.broadcast(
-      onListen: () async{
-        final url = dotenv.env['URL'];
-        final channelId = dotenv.env['CHANNEL_ID'];
-
-        final liveReadingsUrl = '$url/$channelId/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15';
-        final headers = {"Content-Type": "text/html"};
-
-        final response =  await http.get(Uri.parse(liveReadingsUrl), headers: headers);
 
 
-        final iframe = """"<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="$liveReadingsUrl"></iframe>""";
-
-
-        controller.add([iframe]);
-
-      }
-  );
-  return controller.stream;
-}
 
 
 

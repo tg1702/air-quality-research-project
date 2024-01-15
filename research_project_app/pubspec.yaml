@@ -40,6 +40,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   html: ^0.15.3
   flutter_html: ^2.2.1
+  web_socket_channel: ^2.4.0
 
 dev_dependencies:
   flutter_test:
