@@ -7,6 +7,33 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_html/flutter_html.dart';
 
+import 'main.dart';
+
+class MainChartPage extends StatelessWidget {
+  const MainChartPage({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Research App',
+      theme: ThemeData(
+        // This is the theme of your application.
+        //
+        // Try running your application with "flutter run". You'll see the
+        // application has a blue toolbar. Then, without quitting the app, try
+        // changing the primarySwatch below to Colors.green and then invoke
+        // "hot reload" (press "r" in the console where you ran "flutter run",
+        // or simply save your changes to "hot reload" in a Flutter IDE).
+        // Notice that the counter didn't reset back to zero; the application
+        // is not restarted.
+        primarySwatch: Colors.blue,
+      ),
+      home: const ChartPage(),
+    );
+  }
+}
+
 class ChartPage extends StatefulWidget{
   const ChartPage({super.key});
 
@@ -16,9 +43,15 @@ class ChartPage extends StatefulWidget{
 
 class _ChartPageState extends State<ChartPage>{
 
+  int _selectedIndex = 0;
   @override
   Widget build(BuildContext context){
     return Scaffold(
+      appBar: AppBar(
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: const Text("Research App"),
+      ),
 
       body: Center(
         child: StreamBuilder<List>(
@@ -70,10 +103,29 @@ class _ChartPageState extends State<ChartPage>{
 
         ),
 
+
     ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.stacked_line_chart), label: 'Charts'),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.black,
+        onTap: _navigate,
+
+      ),
 
 
     );
+
+
+  }
+
+  void _navigate(int index){
+    _selectedIndex = index;
+    if (_selectedIndex == 0)
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Research App')) );
   }
 }
 
@@ -99,3 +151,4 @@ Stream<List> _getCharts(){
   );
   return controller.stream;
 }
+
