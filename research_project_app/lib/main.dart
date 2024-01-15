@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'charts.dart';
+
 Future main() async {
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
@@ -226,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _navigate(int index){
     _selectedIndex = index;
-    //Navigator.push(context, MaterialPageRoute(builder: (context) => const Page2()) );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const ChartPage()) );
   }
 }
 
@@ -238,12 +240,11 @@ Stream<List> getFields()  {
   late final StreamController<List> controller;
   controller = StreamController<List>(
     onListen: () async {
-      final complete_url = "$url/$channelId/feeds.json";
+      final completeUrl = "$url/$channelId/feeds.json";
       final headers = {'Content-Type': 'application/json'};
 
-      final response = await http.get(Uri.parse(complete_url), headers: headers);
+      final response = await http.get(Uri.parse(completeUrl), headers: headers);
 
-      print(complete_url);
       Map<String,dynamic> originalJson = Map<String,dynamic>.from(json.decode(response.body));
 
       if (originalJson["feeds"] != []){
