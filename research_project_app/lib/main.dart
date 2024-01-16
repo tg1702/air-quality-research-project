@@ -116,42 +116,47 @@ class _MyHomePageState extends State<MyHomePage> {
           children = <Widget> [
             SfRadialGauge(
               title: const GaugeTitle(
-                  text: 'PPM Meter',
-                  textStyle: TextStyle(fontSize: 50, fontWeight: FontWeight.bold)
+                  text: 'Air Quality Monitor',
+                  textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)
               ),
               axes: <RadialAxis>[
-                RadialAxis(minimum: 0, maximum: 300, ranges: <GaugeRange>[
+                RadialAxis(minimum: 0, maximum: 300,
+                  axisLabelStyle: const GaugeTextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15
+                  ),
+                  ranges: <GaugeRange>[
                   GaugeRange(
                       startValue: 0,
                       endValue: 90,
                       color: Colors.green,
-                      startWidth: 10,
-                      endWidth: 10),
+                      startWidth: 20,
+                      endWidth: 20),
                   GaugeRange(
                     startValue: 91,
                     endValue: 220,
                     color: Colors.yellow,
-                    startWidth: 10,
-                    endWidth: 10,
+                    startWidth: 20,
+                    endWidth: 20,
                   ),
                   GaugeRange(
                     startValue: 221,
                     endValue: 300,
                     color: Colors.red,
-                    startWidth: 10,
-                    endWidth: 10,
+                    startWidth: 20,
+                    endWidth: 20,
                   ),
                 ],
                   pointers: <GaugePointer>[
-                    NeedlePointer(value: double.parse(snapshot.data!["field1"]))
+                    NeedlePointer(value: double.parse(snapshot.data!["field1"]), enableAnimation: true)
                   ],
                   annotations: <GaugeAnnotation>[
                     GaugeAnnotation(
                         widget: Text(
-                            '${snapshot.data!["field1"]} ppm', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold)
+                            'Current reading: ${snapshot.data!["field1"]} ppm', style: const TextStyle(fontSize: 20)
                         ),
                         angle: 90,
-                        positionFactor: 0.5
+                        positionFactor: 1.0
                     ),
                   ],
                 )
@@ -164,34 +169,37 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSize:MainAxisSize.min,
                 children: <Widget> [
                   Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 50.0, 0),
+                      padding: const EdgeInsets.fromLTRB(0, 50, 50.0, 0),
                       child: Column(
                         children: [
                           const Text(
-                              'Daily Average',
+                              'Previous Daily Average',
                               style: TextStyle(fontWeight: FontWeight.bold)
                           ),
 
                           Text(
-                            '${snapshot.data!["fields"]} ppm',
+                            '${snapshot.data!["field_2"]} ppm',
 
                           ),
                         ],
                       )
                   ),
 
-
-                  Column(
-                    children: [
-                      const Text(
-                          'Weekly Average',
-                          style: TextStyle(fontWeight: FontWeight.bold)
-                      ),
-                      Text(
-                          '${test} ppm'
-                      )
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 50, 0, 0),
+                    child: Column(
+                      children: [
+                        const Text(
+                            'Previous Weekly Average',
+                            style: TextStyle(fontWeight: FontWeight.bold)
+                        ),
+                        Text(
+                            '${snapshot.data!["field_3"]} ppm'
+                        )
+                      ],
+                    ),
                   ),
+
 
                 ]
 
