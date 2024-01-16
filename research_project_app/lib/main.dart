@@ -6,8 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/status.dart' as status;
+
 
 import 'charts.dart';
 
@@ -110,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
         }
         else if (snapshot.connectionState ==  ConnectionState.waiting){
-          // TODO: Show circular progress bar
+           return const CircularProgressIndicator();
         }
         else if (snapshot.connectionState ==  ConnectionState.active){
 
@@ -203,9 +202,19 @@ class _MyHomePageState extends State<MyHomePage> {
           ];
         }
 
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: children,
+        return ListView(
+            shrinkWrap: true,
+
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 20.0, 0, 0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: children,
+                ),
+              )
+
+            ]
         );
       },
 
@@ -232,32 +241,80 @@ class _MyHomePageState extends State<MyHomePage> {
 
         }
         else if (snapshot.connectionState ==  ConnectionState.waiting){
-          // TODO: Show circular progress bar
+          return const CircularProgressIndicator();
         }
         else if (snapshot.connectionState ==  ConnectionState.active) {
 
           children = <Widget>[
-            Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Html(
-                      data: snapshot.data?[0]
-                  ),
 
-                ]
+            SizedBox(
+                width: 500,
+                height: 500,
+                child: Card(child:  Column(
+                    children: [
+                      const Text(
+                          "Live Readings",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)
+                      ),
+                      Html(
+                        data: snapshot.data?[0],
+
+                      ),
+                    ]
+                ))
             ),
-            const Text(
-                'Testing'
-            )
+
+            SizedBox(
+                width: 500,
+                height: 500,
+                child: Card(child:  Column(
+                    children: [
+                      const Text(
+                        "Daily Readings",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)
+                      ),
+                      Html(
+                        data: snapshot.data?[1],
+
+                      ),
+                    ]
+                  ))
+            ),
+
+            SizedBox(
+                width: 500,
+                height: 500,
+                child: Card(child:  Column(
+                    children: [
+                      const Text(
+                          "Weekly Readings",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)
+                      ),
+                      Html(
+                        data: snapshot.data?[2],
+
+                      ),
+                    ]
+                ))
+            ),
+
+
+
+
 
           ];
         }
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
+        return ListView(
+          shrinkWrap: true,
+          children: [
+          Column(
+
           children: children,
+          )
+          ]
         );
+
       },
 
 
@@ -322,11 +379,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Stream<Map<String, dynamic>> getFields()  {
     StreamController<Map<String, dynamic>> controller = StreamController<Map<String,dynamic>>.broadcast();
+    print("Starting");
     Timer.periodic(const Duration(seconds: 10), (Timer timer) async {
       // Fetch data from the API and update your state
 
           final completeUrl = "$url/$channelId/feeds.json?results=1";
           final headers = {'Content-Type': 'application/json'};
+
 
           final response = await http.get(Uri.parse(completeUrl), headers: headers);
 
@@ -340,9 +399,8 @@ class _MyHomePageState extends State<MyHomePage> {
             });
 
 
+
           }
-
-
 
     });
     return controller.stream;
@@ -352,24 +410,25 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Stream<List> _getCharts(){
-    late final StreamController<List> controller;
+    final StreamController<List> controller = StreamController<List>.broadcast();
 
-    controller = StreamController<List>.broadcast(
-        onListen: () async{
-          final url = dotenv.env['URL'];
-          final channelId = dotenv.env['CHANNEL_ID'];
+    Timer.periodic(const Duration(seconds: 30), (Timer timer) async{
+      final url = dotenv.env['URL'];
+      final channelId = dotenv.env['CHANNEL_ID'];
 
-          final liveReadingsUrl = '$url/$channelId/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15';
+      final liveReadingsUrl = '$url/$channelId/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
+      final dailyReadingsUrl = '$url/$channelId/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
+      final weeklyReadingsUrl = '$url/$channelId/charts/3?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
+
+      final liveIframe = """"<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$liveReadingsUrl"></iframe>""";
+      final dailyIframe = """<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$dailyReadingsUrl"></iframe>""";
+      final weeklyIframe = """<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$weeklyReadingsUrl"></iframe>""";
+
+      controller.add([liveIframe, dailyIframe, weeklyIframe]);
+    });
 
 
 
-          final iframe = """"<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="$liveReadingsUrl"></iframe>""";
-
-
-          controller.add([iframe]);
-
-        }
-    );
     return controller.stream;
   }
 }
