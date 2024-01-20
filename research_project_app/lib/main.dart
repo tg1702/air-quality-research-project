@@ -1,4 +1,11 @@
-import 'dart:math';
+/*
+TODO: Do null checking in getFields to check in the case that fields contain null values.
+Possible also converting the fields to double within the function itself would be cleaner
+
+Try to reduce size of StreamBuilders, especially on second page
+Dispose of controllers
+*/
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_html/flutter_html.dart';
@@ -73,8 +80,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
 
+  @override
+  void dispose(){
 
-  late final body_1 = Center(
+    super.dispose();
+  }
+
+
+  late final home = Center(
     // Center is a layout widget. It takes a single child and positions it
     // in the middle of the parent.
     child: StreamBuilder<Map<String,dynamic>>(
@@ -112,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
            return const CircularProgressIndicator();
         }
         else if (snapshot.connectionState ==  ConnectionState.active){
-
+          print(snapshot.data);
           children = <Widget> [
             SfRadialGauge(
               title: const GaugeTitle(
@@ -148,12 +161,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
                   pointers: <GaugePointer>[
-                    NeedlePointer(value: double.parse(snapshot.data!["field1"]), enableAnimation: true)
+                    NeedlePointer(value: (snapshot.data?["field1"] == null ? 0: double.parse(snapshot.data?["field1"])), enableAnimation: true)
                   ],
                   annotations: <GaugeAnnotation>[
                     GaugeAnnotation(
                         widget: Text(
-                            'Current reading: ${snapshot.data!["field1"]} ppm', style: const TextStyle(fontSize: 20)
+                            'Current reading: ${snapshot.data?["field1"] } ppm', style: const TextStyle(fontSize: 20)
                         ),
                         angle: 90,
                         positionFactor: 1.0
@@ -178,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
 
                           Text(
-                            '${snapshot.data!["field_2"]} ppm',
+                            '${snapshot.data?["field2"].toString()} ppm',
 
                           ),
                         ],
@@ -194,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(fontWeight: FontWeight.bold)
                         ),
                         Text(
-                            '${snapshot.data!["field_3"]} ppm'
+                            '${snapshot.data?["field3"]} ppm'
                         )
                       ],
                     ),
@@ -230,7 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
     ),
   );
 
-  late final body_2 = Center(
+  late final charts = Center(
     child: StreamBuilder<List>(
       stream: _getCharts(),
       builder: (BuildContext context, AsyncSnapshot<List> snapshot){
@@ -252,6 +265,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return const CircularProgressIndicator();
         }
         else if (snapshot.connectionState ==  ConnectionState.active) {
+
 
           children = <Widget>[
 
@@ -332,8 +346,8 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   late final bodyOptions = [
-    body_1,
-    body_2
+    home,
+    charts
   ];
 
 
@@ -387,33 +401,45 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Stream<Map<String, dynamic>> getFields()  {
     StreamController<Map<String, dynamic>> controller = StreamController<Map<String,dynamic>>.broadcast();
-    print("Starting");
+
     Timer.periodic(const Duration(seconds: 10), (Timer timer) async {
       // Fetch data from the API and update your state
 
-          final completeUrl = "$url/$channelId/feeds.json?results=1";
-          final headers = {'Content-Type': 'application/json'};
-
-
-          final response = await http.get(Uri.parse(completeUrl), headers: headers);
-
-          Map<String,dynamic> originalJson = Map<String,dynamic>.from(json.decode(response.body));
-
-          if (originalJson["feeds"] != []){
             controller.add({
               "field1":
-              originalJson["feeds"][0]["field1"]
+              await getSingleField(1)
               ,
+              "field2":
+              await getSingleField(2)
+              ,
+              "field3":
+              await getSingleField(3)
+
             });
 
 
 
-          }
-
     });
+
     return controller.stream;
 
+  }
 
+  Future<String> getSingleField(int num) async{
+    final requestUrl = "$url/$channelId/fields/$num/last.json";
+
+    final headers = {'Content-Type': 'application/json'};
+
+
+    try{
+      final response = await http.get(Uri.parse(requestUrl), headers: headers);
+      Map<String,dynamic> recentFeeds = Map<String,dynamic>.from(json.decode(response.body));
+
+      return recentFeeds["field$num"];
+    }
+    catch(e){
+      return "N/A";
+    }
 
   }
 
@@ -433,6 +459,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final weeklyIframe = """<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$weeklyReadingsUrl"></iframe>""";
 
       controller.add([liveIframe, dailyIframe, weeklyIframe]);
+
     });
 
 
