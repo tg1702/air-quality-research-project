@@ -15,8 +15,6 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
-import 'charts.dart';
-
 Future main() async {
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
@@ -133,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)
               ),
               axes: <RadialAxis>[
-                RadialAxis(minimum: 0, maximum: 300,
+                RadialAxis(minimum: 0, maximum: 1000,
                   axisLabelStyle: const GaugeTextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15
@@ -141,27 +139,27 @@ class _MyHomePageState extends State<MyHomePage> {
                   ranges: <GaugeRange>[
                   GaugeRange(
                       startValue: 0,
-                      endValue: 90,
+                      endValue: 800,
                       color: Colors.green,
                       startWidth: 20,
                       endWidth: 20),
                   GaugeRange(
-                    startValue: 91,
-                    endValue: 220,
+                    startValue: 801,
+                    endValue: 900,
                     color: Colors.yellow,
                     startWidth: 20,
                     endWidth: 20,
                   ),
-                  GaugeRange(
-                    startValue: 221,
-                    endValue: 300,
+                  GaugeRange(   
+                    startValue: 901,
+                    endValue: 1000,
                     color: Colors.red,
                     startWidth: 20,
                     endWidth: 20,
                   ),
                 ],
                   pointers: <GaugePointer>[
-                    NeedlePointer(value: (snapshot.data?["field1"] == null ? 0: double.parse(snapshot.data?["field1"])), enableAnimation: true)
+                    NeedlePointer(value: (snapshot.data?["field1"]), enableAnimation: true)
                   ],
                   annotations: <GaugeAnnotation>[
                     GaugeAnnotation(
@@ -186,7 +184,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Column(
                         children: [
                           const Text(
-                              'Previous Daily Average',
+                              'Previous Hourly Average',
                               style: TextStyle(fontWeight: FontWeight.bold)
                           ),
 
@@ -203,11 +201,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Column(
                       children: [
                         const Text(
-                            'Previous Weekly Average',
+                            'Previous Daily Average',
                             style: TextStyle(fontWeight: FontWeight.bold)
                         ),
                         Text(
-                            '${snapshot.data?["field3"]} ppm'
+                            '${snapshot.data?["field3"].toString()} ppm'
                         )
                       ],
                     ),
@@ -292,7 +290,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Card(child:  Column(
                     children: [
                       const Text(
-                        "Daily Readings",
+                        "Hourly Readings",
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)
                       ),
                       Html(
@@ -309,7 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Card(child:  Column(
                     children: [
                       const Text(
-                          "Weekly Readings",
+                          "Daily Readings",
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)
                       ),
                       Html(
@@ -407,13 +405,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
             controller.add({
               "field1":
-              await getSingleField(1)
+              await getSingleField(2362111, 1)
               ,
               "field2":
-              await getSingleField(2)
+              await getSingleField(2340013, 1)
               ,
               "field3":
-              await getSingleField(3)
+              await getSingleField(2340013, 2)
 
             });
 
@@ -425,7 +423,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
 
-  Future<String> getSingleField(int num) async{
+  Future<double> getSingleField(int channelId, int num) async{
     final requestUrl = "$url/$channelId/fields/$num/last.json";
 
     final headers = {'Content-Type': 'application/json'};
@@ -435,10 +433,11 @@ class _MyHomePageState extends State<MyHomePage> {
       final response = await http.get(Uri.parse(requestUrl), headers: headers);
       Map<String,dynamic> recentFeeds = Map<String,dynamic>.from(json.decode(response.body));
 
-      return recentFeeds["field$num"];
+      return double.parse(double.parse(recentFeeds["field$num"]).toStringAsFixed(2));
     }
     catch(e){
-      return "N/A";
+      print(e);
+      return -1;
     }
 
   }
@@ -446,21 +445,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Stream<List> _getCharts(){
     final StreamController<List> controller = StreamController<List>.broadcast();
 
-    Timer.periodic(const Duration(seconds: 30), (Timer timer) async{
-      final url = dotenv.env['URL'];
-      final channelId = dotenv.env['CHANNEL_ID'];
+    Timer.periodic(const Duration(seconds: 10), (Timer timer) async {
+      const liveReadingsUrl = 'https://api.thingspeak.com/channels/2362111/charts/1?bgcolor=%23ffffff&color=%23000000&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
+      const hourlyReadingsUrl = 'https://api.thingspeak.com/channels/2340013/charts/1?bgcolor=%23ffffff&color=%23000000&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
+      const dailyReadingsUrl = 'https://api.thingspeak.com/channels/2340013/charts/2?bgcolor=%23ffffff&color=%23000000&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
 
-      final liveReadingsUrl = '$url/$channelId/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
-      final dailyReadingsUrl = '$url/$channelId/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
-      final weeklyReadingsUrl = '$url/$channelId/charts/3?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15&height=auto&width=auto';
+      const liveIframe = """ <iframe width="460" height="250" style="border: 1px solid #cccccc;" src="$liveReadingsUrl"></iframe>""";
+      const hourlyIframe = """<iframe width="460" height="250" style="border: 1px solid #cccccc;" src="$hourlyReadingsUrl"></iframe>""";
+      const dailyIframe = """<iframe width="460" height="250" style="border: 1px solid #cccccc;" src="$dailyReadingsUrl"></iframe>""";
 
-      final liveIframe = """"<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$liveReadingsUrl"></iframe>""";
-      final dailyIframe = """<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$dailyReadingsUrl"></iframe>""";
-      final weeklyIframe = """<iframe width="460" height="350" style="border: 1px solid #cccccc;" src="$weeklyReadingsUrl"></iframe>""";
-
-      controller.add([liveIframe, dailyIframe, weeklyIframe]);
-
+      controller.add([liveIframe, hourlyIframe, dailyIframe]);
     });
+
 
 
 
