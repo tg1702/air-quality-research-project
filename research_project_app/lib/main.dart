@@ -123,98 +123,25 @@ class _MyHomePageState extends State<MyHomePage> {
            return const CircularProgressIndicator();
         }
         else if (snapshot.connectionState ==  ConnectionState.active){
-          print(snapshot.data);
+
           children = <Widget> [
-            SfRadialGauge(
-              title: const GaugeTitle(
-                  text: 'Air Quality Monitor',
-                  textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)
-              ),
-              axes: <RadialAxis>[
-                RadialAxis(minimum: 0, maximum: 1000,
-                  axisLabelStyle: const GaugeTextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15
-                  ),
-                  ranges: <GaugeRange>[
-                  GaugeRange(
-                      startValue: 0,
-                      endValue: 800,
-                      color: Colors.green,
-                      startWidth: 20,
-                      endWidth: 20),
-                  GaugeRange(
-                    startValue: 801,
-                    endValue: 900,
-                    color: Colors.yellow,
-                    startWidth: 20,
-                    endWidth: 20,
-                  ),
-                  GaugeRange(   
-                    startValue: 901,
-                    endValue: 1000,
-                    color: Colors.red,
-                    startWidth: 20,
-                    endWidth: 20,
-                  ),
-                ],
-                  pointers: <GaugePointer>[
-                    NeedlePointer(value: (snapshot.data?["field1"]), enableAnimation: true)
-                  ],
-                  annotations: <GaugeAnnotation>[
-                    GaugeAnnotation(
-                        widget: Text(
-                            'Current reading: ${snapshot.data?["field1"] } ppm', style: const TextStyle(fontSize: 20)
-                        ),
-                        angle: 90,
-                        positionFactor: 1.0
-                    ),
-                  ],
-                )
-              ],
+           createGauge("CO2 Monitor", snapshot.data?["live_co2"]),
+            displayHistoricalData(snapshot.data?["hourly_co2"], snapshot.data?["daily_co2"]),
 
+            createGauge("CO Monitor", snapshot.data?["live_co"]),
+            displayHistoricalData(snapshot.data?["hourly_co"], snapshot.data?["daily_co"]),
 
-            ),
+            createGauge("Alcohol Monitor", snapshot.data?["live_alcohol"]),
+            displayHistoricalData(snapshot.data?["hourly_alcohol"], snapshot.data?["daily_alcohol"]),
 
-            Row(
-                mainAxisSize:MainAxisSize.min,
-                children: <Widget> [
-                  Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 50, 50.0, 0),
-                      child: Column(
-                        children: [
-                          const Text(
-                              'Previous Hourly Average',
-                              style: TextStyle(fontWeight: FontWeight.bold)
-                          ),
+            createGauge("NH4 Monitor", snapshot.data?["live_nh4"]),
+            displayHistoricalData(snapshot.data?["hourly_nh4"], snapshot.data?["daily_nh4"]),
 
-                          Text(
-                            '${snapshot.data?["field2"].toString()} ppm',
+            createGauge("Toluene Monitor", snapshot.data?["live_toluene"]),
+            displayHistoricalData(snapshot.data?["hourly_toluene"], snapshot.data?["daily_toluene"]),
 
-                          ),
-                        ],
-                      )
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 50, 0, 0),
-                    child: Column(
-                      children: [
-                        const Text(
-                            'Previous Daily Average',
-                            style: TextStyle(fontWeight: FontWeight.bold)
-                        ),
-                        Text(
-                            '${snapshot.data?["field3"].toString()} ppm'
-                        )
-                      ],
-                    ),
-                  ),
-
-
-                ]
-
-            ),
+            createGauge("Acetone Monitor", snapshot.data?["live_acetone"]),
+            displayHistoricalData(snapshot.data?["hourly_acetone"], snapshot.data?["daily_acetone"]),
 
 
 
@@ -404,14 +331,60 @@ class _MyHomePageState extends State<MyHomePage> {
       // Fetch data from the API and update your state
 
             controller.add({
-              "field1":
+              "live_co2":
               await getSingleField(2362111, 1)
               ,
-              "field2":
-              await getSingleField(2340013, 1)
+              "hourly_co2":
+              await getSingleField(2456120, 1)
               ,
-              "field3":
+              "daily_co2":
+              await getSingleField(2340013, 1),
+
+              "live_co":
+              await getSingleField(2362111, 2)
+              ,
+              "hourly_co":
+              await getSingleField(2456120, 2)
+              ,
+              "daily_co":
               await getSingleField(2340013, 2)
+              ,
+              "live_alcohol":
+              await getSingleField(2362111, 3)
+              ,
+              "hourly_alcohol":
+              await getSingleField(2456120, 3)
+              ,
+              "daily_alcohol":
+              await getSingleField(2340013, 3),
+
+              "live_nh4":
+              await getSingleField(2362111, 4)
+              ,
+              "hourly_nh4":
+              await getSingleField(2456120, 4)
+              ,
+              "daily_nh4":
+              await getSingleField(2340013, 4),
+
+              "live_toluene":
+              await getSingleField(2362111, 5)
+              ,
+              "hourly_toluene":
+              await getSingleField(2456120, 5)
+              ,
+              "daily_toluene":
+              await getSingleField(2340013, 5),
+
+              "live_acetone":
+              await getSingleField(2362111, 6)
+              ,
+              "hourly_acetone":
+              await getSingleField(2456120, 6)
+              ,
+              "daily_acetone":
+              await getSingleField(2340013, 6),
+
 
             });
 
@@ -440,6 +413,102 @@ class _MyHomePageState extends State<MyHomePage> {
       return -1;
     }
 
+  }
+
+
+  Widget createGauge(String title, double reading){
+    return  SfRadialGauge(
+      title: GaugeTitle(
+          text: title,
+          textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)
+      ),
+      axes: <RadialAxis>[
+        RadialAxis(minimum: 0, maximum: 1000,
+          axisLabelStyle: const GaugeTextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15
+          ),
+          ranges: <GaugeRange>[
+            GaugeRange(
+                startValue: 0,
+                endValue: 800,
+                color: Colors.green,
+                startWidth: 20,
+                endWidth: 20),
+            GaugeRange(
+              startValue: 801,
+              endValue: 900,
+              color: Colors.yellow,
+              startWidth: 20,
+              endWidth: 20,
+            ),
+            GaugeRange(
+              startValue: 901,
+              endValue: 1000,
+              color: Colors.red,
+              startWidth: 20,
+              endWidth: 20,
+            ),
+          ],
+          pointers: <GaugePointer>[
+            NeedlePointer(value: (reading), enableAnimation: true)
+          ],
+          annotations: <GaugeAnnotation>[
+            GaugeAnnotation(
+                widget: Text(
+                    'Current reading: $reading  ppb', style: const TextStyle(fontSize: 20)
+                ),
+                angle: 90,
+                positionFactor: 1.0
+            ),
+          ],
+        )
+      ],
+
+
+    );
+  }
+
+  Widget displayHistoricalData(double hourly, double daily){
+    return Row(
+        mainAxisSize:MainAxisSize.min,
+        children: <Widget> [
+          Padding(
+              padding: const EdgeInsets.fromLTRB(0, 50, 50.0, 0),
+              child: Column(
+                children: [
+                  const Text(
+                      'Previous Hourly Average',
+                      style: TextStyle(fontWeight: FontWeight.bold)
+                  ),
+
+                  Text(
+                    '${hourly.toString()} ppb',
+
+                  ),
+                ],
+              )
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 50, 0, 0),
+            child: Column(
+              children: [
+                const Text(
+                    'Previous Daily Average',
+                    style: TextStyle(fontWeight: FontWeight.bold)
+                ),
+                Text(
+                    '${daily.toString()} ppb'
+                )
+              ],
+            ),
+          ),
+
+
+        ]
+
+    );
   }
 
   Stream<List> _getCharts(){
