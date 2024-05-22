@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:water_bottle/water_bottle.dart';
 
 
 Future main() async {
@@ -123,27 +124,29 @@ class _MyHomePageState extends State<MyHomePage> {
            return const CircularProgressIndicator();
         }
         else if (snapshot.connectionState ==  ConnectionState.active){
+          double minHeight = 16.36;
+          plainBottleRef.currentState?.waterLevel = 1.0 - snapshot.data?["water_levels"] / minHeight;
 
           children = <Widget> [
-           createGauge("CO2 Monitor", snapshot.data?["live_co2"]),
-            displayHistoricalData(snapshot.data?["hourly_co2"], snapshot.data?["daily_co2"]),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 60.0),
+              child: createGauge("Water Level", minHeight - snapshot.data?["water_levels"]),
+            ),
 
-            createGauge("CO Monitor", snapshot.data?["live_co"]),
-            displayHistoricalData(snapshot.data?["hourly_co"], snapshot.data?["daily_co"]),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: SizedBox(
+                width: 100,
+                height: 400,
+                child:  WaterBottle(
+                    key: plainBottleRef,
+                    waterColor: Colors.blue,
+                    bottleColor: Colors.lightBlue,
+                    capColor: Colors.blueGrey),
+              ),
+            ),
 
-            createGauge("Alcohol Monitor", snapshot.data?["live_alcohol"]),
-            displayHistoricalData(snapshot.data?["hourly_alcohol"], snapshot.data?["daily_alcohol"]),
-
-            createGauge("NH4 Monitor", snapshot.data?["live_nh4"]),
-            displayHistoricalData(snapshot.data?["hourly_nh4"], snapshot.data?["daily_nh4"]),
-
-            createGauge("Toluene Monitor", snapshot.data?["live_toluene"]),
-            displayHistoricalData(snapshot.data?["hourly_toluene"], snapshot.data?["daily_toluene"]),
-
-            createGauge("Acetone Monitor", snapshot.data?["live_acetone"]),
-            displayHistoricalData(snapshot.data?["hourly_acetone"], snapshot.data?["daily_acetone"]),
-
-
+          Text("Water Level: ${minHeight - snapshot.data?["water_levels"]} "),
 
           ];
         }
@@ -151,16 +154,13 @@ class _MyHomePageState extends State<MyHomePage> {
         return ListView(
             shrinkWrap: true,
 
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 20.0, 0, 0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: children,
-                ),
+            children:
+            [
+              Column(
+                children: children,
               )
-
             ]
+            ,
         );
       },
 
@@ -271,12 +271,11 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   late final bodyOptions = [
-    home,
-    charts
+    home
   ];
 
 
-
+  final plainBottleRef = GlobalKey<WaterBottleState>();
 
 
   @override
@@ -293,17 +292,8 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: bodyOptions[_selectedIndex],
-          bottomNavigationBar: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.stacked_line_chart), label: 'Charts'),
-              ],
-              currentIndex: _selectedIndex,
-              selectedItemColor: Colors.black,
-              onTap: _navigate,
+      body: bodyOptions[0],
 
-          ),
 
 
           // This trailing comma makes auto-formatting nicer for build methods.
@@ -331,59 +321,8 @@ class _MyHomePageState extends State<MyHomePage> {
       // Fetch data from the API and update your state
 
             controller.add({
-              "live_co2":
+              "water_levels":
               await getSingleField(2362111, 1)
-              ,
-              "hourly_co2":
-              await getSingleField(2456120, 1)
-              ,
-              "daily_co2":
-              await getSingleField(2340013, 1),
-
-              "live_co":
-              await getSingleField(2362111, 2)
-              ,
-              "hourly_co":
-              await getSingleField(2456120, 2)
-              ,
-              "daily_co":
-              await getSingleField(2340013, 2)
-              ,
-              "live_alcohol":
-              await getSingleField(2362111, 3)
-              ,
-              "hourly_alcohol":
-              await getSingleField(2456120, 3)
-              ,
-              "daily_alcohol":
-              await getSingleField(2340013, 3),
-
-              "live_nh4":
-              await getSingleField(2362111, 4)
-              ,
-              "hourly_nh4":
-              await getSingleField(2456120, 4)
-              ,
-              "daily_nh4":
-              await getSingleField(2340013, 4),
-
-              "live_toluene":
-              await getSingleField(2362111, 5)
-              ,
-              "hourly_toluene":
-              await getSingleField(2456120, 5)
-              ,
-              "daily_toluene":
-              await getSingleField(2340013, 5),
-
-              "live_acetone":
-              await getSingleField(2362111, 6)
-              ,
-              "hourly_acetone":
-              await getSingleField(2456120, 6)
-              ,
-              "daily_acetone":
-              await getSingleField(2340013, 6),
 
 
             });
@@ -423,7 +362,7 @@ class _MyHomePageState extends State<MyHomePage> {
           textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)
       ),
       axes: <RadialAxis>[
-        RadialAxis(minimum: 0, maximum: 1000,
+        RadialAxis(minimum: 0, maximum: 16.36,
           axisLabelStyle: const GaugeTextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15
@@ -431,20 +370,20 @@ class _MyHomePageState extends State<MyHomePage> {
           ranges: <GaugeRange>[
             GaugeRange(
                 startValue: 0,
-                endValue: 800,
+                endValue: 9.9,
                 color: Colors.green,
                 startWidth: 20,
                 endWidth: 20),
             GaugeRange(
-              startValue: 801,
-              endValue: 900,
+              startValue: 10.0,
+              endValue: 11.9,
               color: Colors.yellow,
               startWidth: 20,
               endWidth: 20,
             ),
             GaugeRange(
-              startValue: 901,
-              endValue: 1000,
+              startValue: 12.0,
+              endValue: 16.36,
               color: Colors.red,
               startWidth: 20,
               endWidth: 20,
@@ -456,7 +395,7 @@ class _MyHomePageState extends State<MyHomePage> {
           annotations: <GaugeAnnotation>[
             GaugeAnnotation(
                 widget: Text(
-                    'Current reading: $reading  ppb', style: const TextStyle(fontSize: 20)
+                    'Current reading: $reading  inches', style: const TextStyle(fontSize: 20)
                 ),
                 angle: 90,
                 positionFactor: 1.0

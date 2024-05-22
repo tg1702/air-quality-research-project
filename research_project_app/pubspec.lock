@@ -420,6 +420,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.1"
+  water_bottle:
+    dependency: "direct main"
+    description:
+      name: water_bottle
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.5"
   web_socket_channel:
     dependency: "direct main"
     description:
